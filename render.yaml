@@ -5,7 +5,7 @@ services:
     plan: free
     region: oregon
     branch: main
-    buildCommand: npm ci --prefix server && npm ci --prefix client && npm --prefix client run build && node build_db.js
+    buildCommand: npm ci --prefix server && npm ci --include=dev --prefix client && npm --prefix client run build && node build_db.js
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:

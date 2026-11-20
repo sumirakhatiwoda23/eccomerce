@@ -46,7 +46,7 @@ npm start        # Express serves the API and the built app on :3001
 This repo includes `render.yaml` for a free Node web service that serves the
 API and the built client from a single origin.
 
-- **Build:** `npm ci --prefix server && npm ci --prefix client && npm --prefix client run build && node build_db.js`
+- **Build:** `npm ci --prefix server && npm ci --include=dev --prefix client && npm --prefix client run build && node build_db.js`
 - **Start:** `npm start`
 - **Health check:** `/api/health`
 - **Node version:** pinned to `24.22.3` via `.node-version` / `NODE_VERSION`
