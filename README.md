@@ -1,9 +1,19 @@
-# Nimbus Supply — React + SQLite ecommerce demo
+# Nimbus Supply — React + SQLite ecommerce storefront
 
-A small storefront (React + Vite) on top of a Node/Express API that talks
-directly to the SQLite database in this folder. Browse the catalog, add items
-to a cart, create an account, check out (simulated payment), and review your
-orders.
+[![Live demo](https://img.shields.io/badge/live_demo-nimbus--supply.onrender.com-2ea44f?logo=render&logoColor=white)](https://nimbus-supply.onrender.com)
+[![Node.js](https://img.shields.io/badge/Node.js-24-339933?logo=node.js&logoColor=white)](https://nodejs.org)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
+[![Express](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)](https://expressjs.com)
+[![SQLite](https://img.shields.io/badge/SQLite-node%3Asqlite-003B57?logo=sqlite&logoColor=white)](https://nodejs.org/api/sqlite.html)
+
+A small storefront built with React + Vite on top of a Node/Express API that
+talks directly to a SQLite database. Browse the catalog, add items to a cart,
+create an account, check out (simulated payment), and review your orders.
+
+**Live demo:** https://nimbus-supply.onrender.com
+
+> Hosted on Render's free plan, so the first request after idle can take up to a
+> minute while the service wakes up.
 
 ## Demo accounts
 
@@ -18,10 +28,31 @@ All seeded customers use the password **`password123`**:
 
 Or register a new account from `/register`.
 
+## Features
+
+- Product catalog with category filters, text search, and sorting
+- Product pages with ratings and customer reviews
+- Persistent cart (survives reloads via `localStorage`)
+- Account registration and login with server-side sessions
+- Guest or signed-in checkout with server-calculated pricing, shipping, and tax
+- Order history per customer
+- Automatic database creation and seeding on first run
+- Single-service deployment: Express serves both the API and the built client
+
+## Tech stack
+
+| Layer     | Choice                                              |
+| --------- | --------------------------------------------------- |
+| Frontend  | React 19, React Router 7, Vite 8                    |
+| Backend   | Node.js 24, Express 5                               |
+| Database  | SQLite via the built-in `node:sqlite` module        |
+| Auth      | `scrypt` password hashing, DB-backed session cookie |
+| Hosting   | Render (single web service, free plan)              |
 
 ## Quick start
 
-Requires Node 22.13+ (uses the built-in `node:sqlite` module without a flag; tested on Node 26).
+Requires Node 22.13+ (uses the built-in `node:sqlite` module without a flag;
+tested on Node 26). The repo pins Node `24.22.3` via `.node-version`.
 
 ```bash
 npm install                     # root tooling (concurrently)
@@ -30,47 +61,51 @@ npm install --prefix client     # React app
 npm run dev                     # API :3001 + Vite :5173
 ```
 
-Open http://localhost:5173.
+Open http://localhost:5173. The Vite dev server proxies `/api` to the API, so
+there is no CORS setup.
 
-The Vite dev server proxies `/api` to the API, so there is no CORS setup.
+### Demo data
+
+```bash
+npm run db:init    # create + seed ecommerce.db if it is missing
+npm run db:reset   # rebuild ecommerce.db from schema.sql + seed.sql
+```
 
 ### Production build
 
 ```bash
-npm run build    # client -> client/dist
+npm run build    # client -> client/dist, then initialize the database
 npm start        # Express serves the API and the built app on :3001
 ```
 
 ## Deploy on Render
 
-This repo includes `render.yaml` for a free Node web service that serves the
-API and the built client from a single origin.
+This repo includes [`render.yaml`](render.yaml) for a free Node web service that
+serves the API and the built client from a single origin.
 
-- **Build:** `npm ci --prefix server && npm ci --include=dev --prefix client && npm --prefix client run build && node build_db.js`
-- **Start:** `npm start`
-- **Health check:** `/api/health`
-- **Node version:** pinned to `24.22.3` via `.node-version` / `NODE_VERSION`
+| Setting      | Value                                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------------------- |
+| Build        | `npm ci --prefix server && npm ci --include=dev --prefix client && npm --prefix client run build && node build_db.js` |
+| Start        | `npm start`                                                                                                   |
+| Health check | `/api/health`                                                                                                 |
+| Node version | `24.22.3` (via `.node-version` / `NODE_VERSION`)                                                              |
 
-Render's free plan has an ephemeral filesystem, so accounts, sessions and orders
+`--include=dev` is required on the client install because `NODE_ENV=production`
+otherwise skips Vite during the build.
+
+Render's free plan has an ephemeral filesystem, so accounts, sessions, and orders
 created at runtime are lost when the service restarts or spins down. The catalog
 is re-seeded automatically from `schema.sql` + `seed.sql` on startup. For durable
-data, move the service to a paid instance and mount a persistent disk at
-`/var/data`, then set `DB_PATH=/var/data/ecommerce.db`.
-
-
-### Demo data
-
-```bash
-npm run db:reset  # re-run schema.sql + seed.sql (fresh ecommerce.db)
-```
+data, move the service to a paid instance, mount a persistent disk at `/var/data`,
+and set `DB_PATH=/var/data/ecommerce.db`.
 
 ## Project layout
 
 ```
 .
+├── render.yaml                           # Render blueprint
 ├── schema.sql / seed.sql / queries.sql   # database
-├── build_db.py                           # rebuild ecommerce.db
-├── ecommerce.db                          # SQLite database
+├── build_db.js                           # create/seed ecommerce.db
 ├── server/
 │   └── index.js                          # Express API + static hosting
 └── client/
@@ -83,6 +118,8 @@ npm run db:reset  # re-run schema.sql + seed.sql (fresh ecommerce.db)
     │   └── styles.css
     └── vite.config.js
 ```
+
+`ecommerce.db` is generated at runtime and is not committed.
 
 ## API
 
@@ -131,7 +168,7 @@ cookie named `sid` (30-day expiry). There is no client-side token storage.
 }
 ```
 
-Prices, shipping ($5 under $100, free above) and 8% tax are calculated
+Prices, shipping ($5 under $100, free above), and 8% tax are calculated
 server-side. Stock is checked again inside the transaction, so two simultaneous
 checkouts cannot oversell an item. When you are signed in, `email` and
 `fullName` are taken from the session, and guest checkout still works.
