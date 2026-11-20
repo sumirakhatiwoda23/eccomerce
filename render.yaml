@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: nimbus-supply
+    runtime: node
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: npm ci --prefix server && npm ci --prefix client && npm --prefix client run build && node build_db.js
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 24.22.3
+      - key: NODE_ENV
+        value: production

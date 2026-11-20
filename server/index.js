@@ -10,8 +10,29 @@ const ROOT = path.resolve(__dirname, '..');
 const DB_PATH = process.env.DB_PATH ?? path.join(ROOT, 'ecommerce.db');
 const PORT = Number(process.env.PORT ?? 3001);
 
+const dbDir = path.dirname(DB_PATH);
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+
 const db = new DatabaseSync(DB_PATH);
 db.exec('PRAGMA foreign_keys = ON');
+
+// Automatically initialize schema + seed data if tables are missing
+const hasProductsTable = db
+  .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='products'")
+  .get();
+
+if (!hasProductsTable) {
+  console.log('Database tables not found. Seeding initial database from schema.sql and seed.sql...');
+  const schemaPath = path.join(ROOT, 'schema.sql');
+  const seedPath = path.join(ROOT, 'seed.sql');
+  if (fs.existsSync(schemaPath) && fs.existsSync(seedPath)) {
+    db.exec(fs.readFileSync(schemaPath, 'utf8'));
+    db.exec(fs.readFileSync(seedPath, 'utf8'));
+    console.log('Database initialized successfully.');
+  }
+}
 
 // Keep older databases usable after the auth feature was added.
 db.exec(`
@@ -127,16 +148,18 @@ function currentCustomer(req) {
 }
 
 function setSessionCookie(res, token) {
+  const isProd = process.env.NODE_ENV === 'production';
   res.setHeader(
     'Set-Cookie',
-    `${SESSION_COOKIE}=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${SESSION_TTL_DAYS * 86400}`,
+    `${SESSION_COOKIE}=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${SESSION_TTL_DAYS * 86400}${isProd ? '; Secure' : ''}`,
   );
 }
 
 function clearSessionCookie(res) {
+  const isProd = process.env.NODE_ENV === 'production';
   res.setHeader(
     'Set-Cookie',
-    `${SESSION_COOKIE}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0`,
+    `${SESSION_COOKIE}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0${isProd ? '; Secure' : ''}`,
   );
 }
 
@@ -504,6 +527,6 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong' });
 });
 
-app.listen(PORT, () => {
-  console.log(`API listening on http://localhost:${PORT} (db: ${DB_PATH})`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`API listening on http://0.0.0.0:${PORT} (db: ${DB_PATH})`);
 });

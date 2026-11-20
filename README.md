@@ -21,7 +21,7 @@ Or register a new account from `/register`.
 
 ## Quick start
 
-Requires Node 22.5+ (uses the built-in `node:sqlite` module; tested on Node 26).
+Requires Node 22.13+ (uses the built-in `node:sqlite` module without a flag; tested on Node 26).
 
 ```bash
 npm install                     # root tooling (concurrently)
@@ -40,6 +40,23 @@ The Vite dev server proxies `/api` to the API, so there is no CORS setup.
 npm run build    # client -> client/dist
 npm start        # Express serves the API and the built app on :3001
 ```
+
+## Deploy on Render
+
+This repo includes `render.yaml` for a free Node web service that serves the
+API and the built client from a single origin.
+
+- **Build:** `npm ci --prefix server && npm ci --prefix client && npm --prefix client run build && node build_db.js`
+- **Start:** `npm start`
+- **Health check:** `/api/health`
+- **Node version:** pinned to `24.22.3` via `.node-version` / `NODE_VERSION`
+
+Render's free plan has an ephemeral filesystem, so accounts, sessions and orders
+created at runtime are lost when the service restarts or spins down. The catalog
+is re-seeded automatically from `schema.sql` + `seed.sql` on startup. For durable
+data, move the service to a paid instance and mount a persistent disk at
+`/var/data`, then set `DB_PATH=/var/data/ecommerce.db`.
+
 
 ### Demo data
 
