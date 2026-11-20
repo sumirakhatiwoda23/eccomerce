@@ -6,14 +6,10 @@
 [![Express](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)](https://expressjs.com)
 [![SQLite](https://img.shields.io/badge/SQLite-node%3Asqlite-003B57?logo=sqlite&logoColor=white)](https://nodejs.org/api/sqlite.html)
 
-A small storefront built with React + Vite on top of a Node/Express API that
-talks directly to a SQLite database. Browse the catalog, add items to a cart,
-create an account, check out (simulated payment), and review your orders.
+
 
 **Live demo:** https://nimbus-supply.onrender.com
 
-> Hosted on Render's free plan, so the first request after idle can take up to a
-> minute while the service wakes up.
 
 ## Demo accounts
 
